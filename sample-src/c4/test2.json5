@@ -1,0 +1,21 @@
+// JSON5のテスト
+//
+// JSON5では、コメントが記述できる
+// コメント
+/* コメント */
+{
+  // aaa
+  name : "佐藤",
+  hobby : "読書\n読書",
+  // bbb
+  'age' : .30,
+  // sss
+  "hobby2": [
+    "aaaa", // bbb
+    "bbbb", //  aaa
+    "ccc", // ccc
+  ],
+  red: 0xFF,
+  blue: 0x10,
+}
+

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>文字認識</title>
+</head><body onload="init()" style="text-align:center;">
+<h1>手書き文字認識(数字)</h1>
+<div>
+  <!-- ユーザーからの入力を受け付けるCanvas -->
+  <canvas id="main_cv" width="300" height="300"
+       style="border: solid 1px gray"></canvas>
+  <!-- 送信用にリサイズした結果を描画するCanvas -->
+  <canvas id="back_cv" width="28" height="28"
+       style="border:red solid 1px"></canvas>
+</div>
+<div>
+  予測:<div id="result" style="font-size:5em">?</div>
+  <p><button onclick="resetCanvas()"
+    style="font-size:2em;">リセット</button></p>
+</div>
+<script type="text/javascript">
+// 変数など
+var main_cv, ctx, main_r, back_cv, back_ctx;
+var isDown, s_pt, border = 20;
+// 初期化
+function init() {
+  // キャンバスのオブジェクトやコンテキストを取得
+  main_cv = $("#main_cv");
+  ctx = main_cv.getContext("2d");
+  // キャンバスの位置とサイズを取得
+  main_r = main_cv.getBoundingClientRect();
+  // リサイズ処理用のイメージ
+  back_cv = $("#back_cv");
+  back_ctx = back_cv.getContext("2d");
+  // マウスイベントの設定
+  main_cv.onmousedown = function (e) {
+    e.preventDefault();
+    isDown = true;
+    s_pt = getXY(e);
+    ctx.beginPath();
+    ctx.lineWidth = border;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "white";
+    ctx.moveTo(s_pt.x, s_pt.y);
+  };
+  main_cv.onmousemove = function (e) {
+    if (!isDown) return;
+    e.preventDefault();
+    var pt = getXY(e);
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
+    s_pt = pt;
+    ctx.beginPath();
+    ctx.moveTo(pt.x, pt.y);
+  };
+  main_cv.onmouseup = function (e) {
+    if (!isDown) return;
+    isDown = false;
+    ctx.closePath();
+    recognize();
+  };
+  main_cv.onmouseout = main_cv.onmouseup;
+  resetCanvas();
+}
+// マウスの座標を取得
+function getXY(e) {
+  var x = e.clientX;
+  var y = e.clientY;
+  x -= main_r.left;
+  y -= main_r.top;
+  return {"x":x, "y":y};
+}
+// キャンバスの初期化
+function resetCanvas() {
+  ctx.clearRect(0, 0, main_cv.width, main_cv.height);
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, main_cv.width, main_cv.height);
+  ctx.beginPath();
+  back_ctx.clearRect(0,0,back_cv.width,back_cv.height);
+  back_ctx.beginPath();
+  x_min = main_cv.width;
+  x_max = 0;
+  y_min = main_cv.height;
+  y_max = 0;
+}
+// コピー
+function copyToBack() {
+  back_ctx.fillStyle = "black";
+  back_ctx.fillRect(0,0,28,28);
+  back_ctx.drawImage(main_cv, 
+    0, 0, main_cv.width, main_cv.height,
+    0, 0, 28, 28);
+}
+// パターンを作成する
+function getPixelData() {
+  //　画像を28x28にリサイズ
+  copyToBack();
+  // 画像イメージを取得
+  var img = back_ctx.getImageData(0, 0, 28, 28).data;
+  var buf = [];
+  for (var i = 0; i < 28 * 28; i++) {
+    var k = i * 4;
+    var r = img[k + 0]; // red
+    var g = img[k + 1]; // green
+    var b = img[k + 2]; // blue
+    var a = img[k + 3]; // alpha
+    var v = (Math.floor((r + g + b) / 3.0) > 0.5) ? 1 : 0; 
+    buf.push(v);
+  }
+  return buf.join("");
+}
+// 文字認識処理を実行
+function recognize() {
+  // 手書き文字のピクセルを取得
+  var pix = getPixelData();
+  // サーバーへ送信 --- (*9)
+  var uri = "api.php?in=" + pix;
+  $ajax(uri, function (xhr, res) {
+    $("#result").innerHTML = "" + res;
+    console.log("predict=" + res);
+  });
+}
+// DOMを返す
+function $(q) { return document.querySelector(q); }
+// Ajax関数
+function $ajax(url, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4) { //通信完了
+      if (xhr.status == 200) { //HTTPステータス200
+        callback(xhr, xhr.responseText);
+      }
+    }
+  };
+  xhr.send(''); // 通信を開始
+  return xhr;
+}
+</script>
+</body>
+</html>
+
+

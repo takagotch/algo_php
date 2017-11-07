@@ -1,0 +1,28 @@
+{
+    "Taro": {
+        "age": 30,
+        "hobby": [
+            "Guitar",
+            "Piano"
+        ]
+    },
+    "Takeshi": {
+        "age": 18,
+        "hobby": [
+            "Reading"
+        ]
+    },
+    "Arisa": {
+        "age": 16,
+        "hobby": [
+            "Walking",
+            "Tea"
+        ]
+    },
+    "Sara": {
+        "age": 22,
+        "hobby": [
+            "Sleeping"
+        ]
+    }
+}
